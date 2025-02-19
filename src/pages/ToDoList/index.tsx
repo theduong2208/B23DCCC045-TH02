@@ -13,9 +13,10 @@ const index: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header className=" px-4">
-        <Title level={3}>Hệ thống Theo dõi Học tập</Title>
-      </Header>
+      <Header style={{ backgroundColor: '#f0f2f5', padding: '10px' }} className="px-4">
+  <Title level={3} style={{ color: '#333' }}>Hệ thống Theo dõi Học tập</Title>
+</Header>
+
       <Layout>
         <Sider width={200} className="bg-white">
           <Menu
