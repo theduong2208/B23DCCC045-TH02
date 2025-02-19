@@ -39,7 +39,7 @@
   {
 		path: '/bai2',
 		name: 'Bai2',
-		component: './ToDoList',
+		component: './Bai2',
     icon: 'ArrowsAltOutlined',
 	},
   {
