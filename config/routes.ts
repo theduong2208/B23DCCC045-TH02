@@ -37,9 +37,15 @@
 		icon: 'ArrowsAltOutlined',
 	},
   {
-		path: '/todo',
+		path: '/bai2',
 		name: 'Bai2',
 		component: './ToDoList',
+    icon: 'ArrowsAltOutlined',
+	},
+  {
+		path: '/bai1',
+		name: 'Bai1',
+		component: './doan_so',
     icon: 'ArrowsAltOutlined',
 	},
 
