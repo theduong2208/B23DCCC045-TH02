@@ -3,18 +3,13 @@ import {
   Table,
   Button,
   Modal,
-  Form,
-  Select,
-  InputNumber,
-  Input,
   message,
   Typography
 } from 'antd';
 import { ExamStructure, Subject, Question } from '../../interfaces/types';
 import { LocalStorageService } from '../../services/bai2/localStorageService';
-import { ExamService } from '../../services/bai2/examService';
+import ExamForm from './ExamForm';
 
-const { Option } = Select;
 const { Text } = Typography;
 
 function ExamGenerator() {
@@ -22,8 +17,7 @@ function ExamGenerator() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [exams, setExams] = useState<ExamStructure[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [form] = Form.useForm();
-  const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+  const [currentExam, setCurrentExam] = useState<ExamStructure | null>(null);
 
   useEffect(() => {
     setSubjects(LocalStorageService.getItem<Subject[]>('subjects') || []);
@@ -31,62 +25,36 @@ function ExamGenerator() {
     setExams(LocalStorageService.getItem<ExamStructure[]>('exams') || []);
   }, []);
 
-  const handleAddQuestionById = (id: string) => {
-    const question = questions.find(q => q.id === id);
-    if (question) {
-      if (!selectedQuestions.find(q => q.id === id)) {
-        setSelectedQuestions(prev => [...prev, question]);
-        message.success('Đã thêm câu hỏi vào đề thi');
-      } else {
-        message.warning('Câu hỏi đã tồn tại trong danh sách');
-      }
+  const handleSaveExam = (examData: ExamStructure) => {
+    let updatedExams;
+    if (currentExam) {
+      // Chỉnh sửa đề thi
+      updatedExams = exams.map(exam => 
+        exam.id === currentExam.id ? examData : exam
+      );
+      message.success('Đã cập nhật đề thi');
     } else {
-      message.error('Không tìm thấy câu hỏi với ID này');
-    }
-  };
-
-  const handleGenerate = (values: any) => {
-    const { subjectId, examName, totalQuestions } = values;
-    const selectedSubject = subjects.find(s => s.id === subjectId);
-    if (!selectedSubject) return message.error('Vui lòng chọn môn học');
-
-    // Lấy câu hỏi từ ngân hàng theo môn học
-    const subjectQuestions = questions.filter(q => q.subjectId === subjectId);
-
-    // Tính số lượng câu hỏi còn thiếu
-    const remaining = totalQuestions - selectedQuestions.length;
-
-    let finalQuestions = [...selectedQuestions];
-
-    if (remaining > 0) {
-      const randomQuestions = subjectQuestions
-        .filter(q => !finalQuestions.some(fq => fq.id === q.id))
-        .sort(() => 0.5 - Math.random())
-        .slice(0, remaining);
-
-      finalQuestions = [...finalQuestions, ...randomQuestions];
+      // Thêm mới đề thi
+      updatedExams = [...exams, examData];
+      message.success('Đã tạo đề thi thành công');
     }
 
-    if (finalQuestions.length < totalQuestions) {
-      return message.error('Không đủ câu hỏi trong ngân hàng');
-    }
-
-    const examStructure: ExamStructure = {
-      id: `exam_${Date.now()}`,
-      subjectId: subjectId,
-      name: examName,
-      questions: finalQuestions,
-      questionDistribution: []
-    };
-
-    const updatedExams = [...exams, examStructure];
     setExams(updatedExams);
     LocalStorageService.saveItem('exams', updatedExams);
-
-    message.success('Đã tạo đề thi thành công');
     setIsModalVisible(false);
-    form.resetFields();
-    setSelectedQuestions([]);
+    setCurrentExam(null);
+  };
+
+  const handleDelete = (id: string) => {
+    const updatedExams = exams.filter(exam => exam.id !== id);
+    setExams(updatedExams);
+    LocalStorageService.saveItem('exams', updatedExams);
+    message.success('Đã xóa đề thi');
+  };
+
+  const handleEdit = (exam: ExamStructure) => {
+    setCurrentExam(exam);
+    setIsModalVisible(true);
   };
 
   const columns = [
@@ -111,6 +79,37 @@ function ExamGenerator() {
       key: 'questionCount',
       render: (record: ExamStructure) => record.questions.length,
     },
+    {
+      title: 'Phân Phối Mức Độ',
+      key: 'difficultyDistribution',
+      render: (record: ExamStructure) => {
+        const distribution = record.questionDistribution || [];
+        return distribution.map(d => 
+          `${d.difficulty}: ${d.count}`
+        ).join(', ');
+      }
+    },
+    {
+      title: 'Hành Động',
+      key: 'actions',
+      render: (text: any, record: ExamStructure) => (
+        <div>
+          <Button 
+            type="link" 
+            onClick={() => handleEdit(record)}
+          >
+            Sửa
+          </Button>
+          <Button 
+            type="link" 
+            danger 
+            onClick={() => handleDelete(record.id)}
+          >
+            Xóa
+          </Button>
+        </div>
+      ),
+    }
   ];
 
   return (
@@ -123,57 +122,37 @@ function ExamGenerator() {
         Tạo Đề Thi
       </Button>
 
-      <Table columns={columns} dataSource={exams} rowKey="id" />
+      <Table 
+        columns={columns} 
+        dataSource={exams} 
+        rowKey="id" 
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50']
+        }}
+      />
 
       <Modal
-        title="Tạo Đề Thi"
+        title={currentExam ? "Chỉnh Sửa Đề Thi" : "Tạo Đề Thi"}
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        onOk={() => form.submit()}
+        footer={null}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setCurrentExam(null);
+        }}
+        width={700}
       >
-        <Form form={form} onFinish={handleGenerate} layout="vertical">
-          <Form.Item
-            name="subjectId"
-            label="Môn Học"
-            rules={[{ required: true, message: 'Vui lòng chọn môn học' }]}
-          >
-            <Select placeholder="Chọn môn học">
-              {subjects.map(subject => (
-                <Option key={subject.id} value={subject.id}>{subject.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="examName"
-            label="Tên Đề Thi"
-            rules={[{ required: true, message: 'Vui lòng nhập tên đề thi' }]}
-          >
-            <Input placeholder="Nhập tên đề thi" />
-          </Form.Item>
-
-          <Form.Item
-            name="totalQuestions"
-            label="Tổng số câu hỏi"
-            rules={[{ required: true, message: 'Vui lòng nhập số lượng câu hỏi' }]}
-          >
-            <InputNumber min={1} placeholder="Nhập tổng số câu hỏi" style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Input.Search
-            placeholder="Nhập ID câu hỏi để thêm"
-            enterButton="Thêm"
-            onSearch={handleAddQuestionById}
-            style={{ marginBottom: 16 }}
-          />
-
-          <Table
-            dataSource={selectedQuestions}
-            columns={[{ title: 'Nội dung', dataIndex: 'content', key: 'content' }]}
-            rowKey="id"
-            size="small"
-          />
-        </Form>
+        <ExamForm 
+          subjects={subjects}
+          questions={questions}
+          initialExam={currentExam}
+          onSave={handleSaveExam}
+          onCancel={() => {
+            setIsModalVisible(false);
+            setCurrentExam(null);
+          }}
+        />
       </Modal>
     </div>
   );
