@@ -226,13 +226,9 @@ const QuestionBank: React.FC = () => {
 							}))
 						}
 					>
-						{subjects.flatMap((subject) =>
-							subject.knowledgeDomains.map((domain) => (
-								<Option key={`${subject.id}-${domain}`} value={domain}>
-									{domain}
-								</Option>
-							)),
-						)}
+						<Option value='Đại Cương'>Đại Cương</Option>
+						<Option value='Chuyên Ngành'>Chuyên Ngành</Option>
+						<Option value='Tự Chọn'>Tự Chọn</Option>
 					</Select>
 				</Col>
 				<Col span={6}>
