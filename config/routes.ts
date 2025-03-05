@@ -36,19 +36,18 @@
 		component: './RandomUser',
 		icon: 'ArrowsAltOutlined',
 	},
-  {
+	{
 		path: '/bai2',
 		name: 'Bai2',
 		component: './Bai2',
-    icon: 'ArrowsAltOutlined',
+		icon: 'ArrowsAltOutlined',
 	},
-  {
+	{
 		path: '/bai1',
 		name: 'Bai1',
-		component: './doan_so',
-    icon: 'ArrowsAltOutlined',
+		component: './Bai1',
+		icon: 'ArrowsAltOutlined',
 	},
-
 
 	// DANH MUC HE THONG
 	// {
