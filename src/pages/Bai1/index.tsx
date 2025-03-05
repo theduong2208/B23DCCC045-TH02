@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import { Button, Card, List, Typography, message } from 'antd';
+import {
+	TrophyOutlined, // For winning
+	FrownOutlined, // For losing
+	SwapOutlined, // For draw
+} from '@ant-design/icons';
 
 const choices = ['Kéo', 'Búa', 'Bao'];
 
@@ -30,8 +35,29 @@ const RockPaperScissors: React.FC = () => {
 		const computerChoice = choices[Math.floor(Math.random() * choices.length)];
 		const result = getResult(playerChoice, computerChoice);
 
+		// Customize message based on result with different icons
+		switch (result) {
+			case 'Thắng':
+				message.success({
+					content: `Bạn chọn ${playerChoice}, Máy chọn ${computerChoice}. Kết quả: ${result}`,
+					icon: <TrophyOutlined />,
+				});
+				break;
+			case 'Thua':
+				message.error({
+					content: `Bạn chọn ${playerChoice}, Máy chọn ${computerChoice}. Kết quả: ${result}`,
+					icon: <FrownOutlined />,
+				});
+				break;
+			case 'Hòa':
+				message.warning({
+					content: `Bạn chọn ${playerChoice}, Máy chọn ${computerChoice}. Kết quả: ${result}`,
+					icon: <SwapOutlined />,
+				});
+				break;
+		}
+
 		setHistory([...history, { playerChoice, computerChoice, result }]);
-		message.info(`Bạn chọn ${playerChoice}, Máy chọn ${computerChoice}. Kết quả: ${result}`);
 	};
 
 	return (
